@@ -82,10 +82,7 @@ export function OrdersPage() {
   if (isLoading) {
     return (
       <div>
-        <PageHeader
-          title="الطلبات"
-          description="عرض وإدارة طلبات العملاء"
-        />
+        <PageHeader title="الطلبات" description="عرض وإدارة طلبات العملاء" />
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground">جاري تحميل البيانات...</p>
@@ -98,22 +95,14 @@ export function OrdersPage() {
   if (isError) {
     return (
       <div>
-        <PageHeader
-          title="الطلبات"
-          description="عرض وإدارة طلبات العملاء"
-        />
+        <PageHeader title="الطلبات" description="عرض وإدارة طلبات العملاء" />
         <Card>
           <CardContent className="py-10 text-center">
-            <p className="text-destructive">
-              حدث خطأ أثناء تحميل البيانات
-            </p>
+            <p className="text-destructive">حدث خطأ أثناء تحميل البيانات</p>
             <p className="text-sm text-muted-foreground mt-2">
               {error instanceof Error ? error.message : "خطأ غير معروف"}
             </p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="mt-4"
-            >
+            <Button onClick={() => window.location.reload()} className="mt-4">
               إعادة المحاولة
             </Button>
           </CardContent>
@@ -127,21 +116,16 @@ export function OrdersPage() {
 
   return (
     <div>
-      <PageHeader
-        title="الطلبات"
-        description="عرض وإدارة طلبات العملاء"
-        action={{
-          label: "إنشاء طلب",
-          onClick: () => console.log("Create order clicked"),
-        }}
-      />
+      <PageHeader title="الطلبات" description="عرض وإدارة طلبات العملاء" />
       <DataTable data={orders} columns={columns} />
-      
+
       {/* Pagination */}
       {data && data.totalCount > 0 && (
         <div className="mt-4 flex items-center justify-between">
           <div className="text-sm text-muted-foreground">
-            عرض {((page - 1) * pageSize) + 1} - {Math.min(page * pageSize, data.totalCount)} من {data.totalCount} طلب
+            عرض {(page - 1) * pageSize + 1} -{" "}
+            {Math.min(page * pageSize, data.totalCount)} من {data.totalCount}{" "}
+            طلب
           </div>
           <div className="flex items-center gap-2">
             <Button

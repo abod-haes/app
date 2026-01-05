@@ -11,13 +11,7 @@ const getApiBaseUrl = () => {
     return process.env.REACT_APP_API_BASE_URL;
   }
 
-  // In production, use empty string (relative URL) to avoid CORS issues
-  // This assumes API is on same domain or behind a reverse proxy
-  if (process.env.NODE_ENV === "production") {
-    return "http://wasel2.somee.com";
-  }
-
-  // In development, use full URL (proxy will handle CORS)
+  // Use HTTP for both development and production
   return "http://wasel2.somee.com";
 };
 
