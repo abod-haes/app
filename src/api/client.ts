@@ -11,7 +11,13 @@ const getApiBaseUrl = () => {
     return process.env.REACT_APP_API_BASE_URL;
   }
 
-  // Use HTTP for both development and production
+  // In production (Vercel), use relative URLs
+  // Vercel rewrites will proxy /api/* to http://wasel2.somee.com/api/*
+  if (process.env.NODE_ENV === "production") {
+    return ""; // Empty string = relative URLs (same origin)
+  }
+
+  // In development, use full HTTP URL (proxy will handle CORS)
   return "http://wasel2.somee.com";
 };
 
