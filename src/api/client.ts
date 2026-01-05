@@ -11,10 +11,21 @@ const getApiBaseUrl = () => {
     return process.env.REACT_APP_API_BASE_URL;
   }
 
-  // In production (Vercel), use relative URLs
-  // Vercel rewrites will proxy /api/* to http://wasel2.somee.com/api/*
-  if (process.env.NODE_ENV === "production") {
-    return ""; // Empty string = relative URLs (same origin)
+  // Check if we're on Vercel (production) by checking hostname
+  // Use relative URLs so requests go through Vercel serverless function
+  if (typeof window !== "undefined") {
+    const hostname = window.location.hostname;
+    // If on Vercel or production domain, use relative URLs
+    if (
+      hostname.includes("vercel.app") ||
+      hostname.includes("vercel.com") ||
+      process.env.NODE_ENV === "production"
+    ) {
+      return ""; // Empty string = relative URLs (same origin)
+    }
+  } else if (process.env.NODE_ENV === "production") {
+    // Server-side: use relative URLs in production
+    return "";
   }
 
   // In development, use full HTTP URL (proxy will handle CORS)
@@ -22,6 +33,16 @@ const getApiBaseUrl = () => {
 };
 
 export const API_BASE_URL = getApiBaseUrl();
+
+// Log API base URL for debugging (only in browser)
+if (typeof window !== "undefined") {
+  console.log(
+    "[API Client] Base URL:",
+    API_BASE_URL || "(empty - using relative URLs)"
+  );
+  console.log("[API Client] Hostname:", window.location.hostname);
+  console.log("[API Client] NODE_ENV:", process.env.NODE_ENV);
+}
 
 // Helper function to get full image URL
 export const getImageUrl = (imagePath: string): string => {

@@ -26,6 +26,14 @@ export default async function handler(req, res) {
     ? pathSegments.join("/")
     : pathSegments;
 
+  // Log for debugging
+  console.log("Proxy request:", {
+    method: req.method,
+    path: apiPath,
+    query: req.query,
+    body: req.body,
+  });
+
   // Build the target URL
   const targetUrl = `http://wasel2.somee.com/api/${apiPath}`;
 
@@ -133,6 +141,12 @@ export default async function handler(req, res) {
       }
     });
 
+    // Log successful response
+    console.log("Proxy response:", {
+      status: response.status,
+      contentType: contentType,
+    });
+
     // Send response
     res.status(response.status);
 
@@ -147,6 +161,7 @@ export default async function handler(req, res) {
     res.status(500).json({
       error: "Proxy error",
       message: error.message,
+      stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
     });
   }
 }
