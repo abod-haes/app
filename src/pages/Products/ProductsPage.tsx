@@ -19,6 +19,7 @@ import {
   CreateProductDto,
   UpdateProductDto,
 } from "@/types/api/products";
+import { getImageUrl } from "@/api/client";
 
 export function ProductsPage() {
   const [page, setPage] = useState(1);
@@ -94,7 +95,7 @@ export function ProductsPage() {
           <div className="h-12 w-12 rounded-lg overflow-hidden border">
             {mainImage ? (
               <img
-                src={mainImage.imagePath}
+                src={getImageUrl(mainImage.imagePath)}
                 alt={row.name}
                 className="h-full w-full object-cover"
               />

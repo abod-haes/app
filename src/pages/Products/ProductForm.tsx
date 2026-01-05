@@ -1,19 +1,25 @@
 import { useState, useEffect } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Product, CreateProductDto, UpdateProductDto } from "@/types/api/products";
+import { MultipleSelect, SelectOption } from "@/components/ui/select";
+import {
+  Product,
+  CreateProductDto,
+  UpdateProductDto,
+} from "@/types/api/products";
 import { useCategories } from "@/hooks/queries";
-import { Card, CardContent } from "@/components/ui/card";
+import { getImageUrl } from "@/api/client";
+import { Upload, X } from "lucide-react";
 
 interface ProductFormProps {
   open: boolean;
@@ -35,9 +41,13 @@ export function ProductForm({
   const [price, setPrice] = useState<number>(0);
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
-  const { data: categoriesData } = useCategories({ pageSize: 100, includeProducts: false });
+  const { data: categoriesData } = useCategories({
+    pageSize: 100,
+    includeProducts: false,
+  });
   const categories = categoriesData?.items || [];
 
   const isEdit = !!product;
@@ -48,16 +58,20 @@ export function ProductForm({
       setDescription(product.description || "");
       setPrice(product.price);
       setSelectedCategories(product.categories.map((c) => c.id));
-      
+
       const mainImage = product.images.find((img) => img.isMain);
-      setImagePreview(mainImage?.imagePath || product.images[0]?.imagePath || null);
+      setImagePreview(
+        mainImage?.imagePath || product.images[0]?.imagePath || null
+      );
       setImage(null);
+      setImageError(false);
     } else {
       setName("");
       setDescription("");
       setPrice(0);
       setImage(null);
       setImagePreview(null);
+      setImageError(false);
       setSelectedCategories([]);
     }
   }, [product, open]);
@@ -66,21 +80,26 @@ export function ProductForm({
     const file = e.target.files?.[0];
     if (file) {
       setImage(file);
+      setImageError(false);
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagePreview(reader.result as string);
+      };
+      reader.onerror = () => {
+        setImageError(true);
       };
       reader.readAsDataURL(file);
     }
   };
 
-  const handleCategoryToggle = (categoryId: string) => {
-    setSelectedCategories((prev) =>
-      prev.includes(categoryId)
-        ? prev.filter((id) => id !== categoryId)
-        : [...prev, categoryId]
-    );
+  const handleCategoryChange = (values: string[]) => {
+    setSelectedCategories(values);
   };
+
+  const categoryOptions: SelectOption[] = categories.map((category) => ({
+    value: category.id,
+    label: category.name,
+  }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -95,7 +114,8 @@ export function ProductForm({
         name: name.trim(),
         description: description.trim() || undefined,
         price,
-        categoryIds: selectedCategories.length > 0 ? selectedCategories : undefined,
+        categoryIds:
+          selectedCategories.length > 0 ? selectedCategories : undefined,
       };
       onSubmit(formData);
     } else {
@@ -105,7 +125,8 @@ export function ProductForm({
         description: description.trim() || undefined,
         price,
         ...(image && { image }),
-        categoryIds: selectedCategories.length > 0 ? selectedCategories : undefined,
+        categoryIds:
+          selectedCategories.length > 0 ? selectedCategories : undefined,
       };
       onSubmit(formData);
     }
@@ -118,17 +139,19 @@ export function ProductForm({
   };
 
   return (
-    <Sheet open={open} onOpenChange={handleClose}>
-      <SheetContent className="overflow-y-auto sm:max-w-lg">
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <form onSubmit={handleSubmit}>
-          <SheetHeader>
-            <SheetTitle>{isEdit ? "تعديل المنتج" : "إضافة منتج جديد"}</SheetTitle>
-            <SheetDescription>
+          <DialogHeader>
+            <DialogTitle>
+              {isEdit ? "تعديل المنتج" : "إضافة منتج جديد"}
+            </DialogTitle>
+            <DialogDescription>
               {isEdit
                 ? "قم بتعديل معلومات المنتج"
                 : "أدخل معلومات المنتج الجديد"}
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
@@ -176,63 +199,94 @@ export function ProductForm({
 
             <div className="grid gap-2">
               <Label htmlFor="image">الصورة الرئيسية</Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                disabled={isLoading}
-              />
-              {imagePreview && (
-                <div className="mt-2">
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="h-32 w-32 object-cover rounded-lg border"
+              <div className="flex flex-col gap-3">
+                <div className="relative">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    disabled={isLoading}
+                    className="hidden"
                   />
+                  <Label
+                    htmlFor="image"
+                    className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-input rounded-lg cursor-pointer hover:bg-accent hover:border-primary transition-colors"
+                  >
+                    <Upload className="h-8 w-8 text-muted-foreground mb-2" />
+                    <span className="text-sm text-muted-foreground">
+                      اضغط لاختيار صورة أو اسحبها هنا
+                    </span>
+                  </Label>
                 </div>
-              )}
+                {imagePreview && (
+                  <div className="relative inline-block">
+                    <div className="relative">
+                      {imageError ? (
+                        <div className="h-32 w-32 flex flex-col items-center justify-center bg-slate-100 dark:bg-slate-800 rounded-lg border text-xs text-center p-2">
+                          <span className="text-muted-foreground mb-1">
+                            {image?.name || "صورة"}
+                          </span>
+                          <span className="text-muted-foreground text-[10px]">
+                            فشل تحميل الصورة
+                          </span>
+                        </div>
+                      ) : (
+                        <img
+                          src={
+                            imagePreview.startsWith("data:")
+                              ? imagePreview
+                              : getImageUrl(imagePreview)
+                          }
+                          alt={image?.name || "Preview"}
+                          className="h-32 w-32 object-cover rounded-lg border"
+                          onError={() => {
+                            setImageError(true);
+                          }}
+                        />
+                      )}
+                    </div>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                      onClick={() => {
+                        setImage(null);
+                        setImagePreview(null);
+                        setImageError(false);
+                        const input = document.getElementById(
+                          "image"
+                        ) as HTMLInputElement;
+                        if (input) input.value = "";
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="grid gap-2">
-              <Label>الفئات</Label>
-              <Card>
-                <CardContent className="p-4 max-h-48 overflow-y-auto">
-                  {categories.length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      لا توجد فئات متاحة
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {categories.map((category) => (
-                        <div
-                          key={category.id}
-                          className="flex items-center space-x-2 rtl:space-x-reverse"
-                        >
-                          <input
-                            type="checkbox"
-                            id={`category-${category.id}`}
-                            checked={selectedCategories.includes(category.id)}
-                            onChange={() => handleCategoryToggle(category.id)}
-                            disabled={isLoading}
-                            className="h-4 w-4 rounded border-gray-300"
-                          />
-                          <Label
-                            htmlFor={`category-${category.id}`}
-                            className="text-sm font-normal cursor-pointer"
-                          >
-                            {category.name}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <Label htmlFor="categories">الفئات</Label>
+              <MultipleSelect
+                id="categories"
+                options={categoryOptions}
+                placeholder="اختر الفئات"
+                value={selectedCategories}
+                onValueChange={handleCategoryChange}
+              />
+              {selectedCategories.length > 0 && (
+                <p className="text-xs text-muted-foreground">
+                  تم اختيار {selectedCategories.length}{" "}
+                  {selectedCategories.length === 1 ? "فئة" : "فئات"}
+                </p>
+              )}
             </div>
           </div>
 
-          <SheetFooter>
+          <DialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -241,17 +295,15 @@ export function ProductForm({
             >
               إلغاء
             </Button>
-            <Button type="submit" disabled={isLoading || !name.trim() || price <= 0}>
-              {isLoading
-                ? "جاري الحفظ..."
-                : isEdit
-                ? "حفظ التغييرات"
-                : "إضافة"}
+            <Button
+              type="submit"
+              disabled={isLoading || !name.trim() || price <= 0}
+            >
+              {isLoading ? "جاري الحفظ..." : isEdit ? "حفظ التغييرات" : "إضافة"}
             </Button>
-          </SheetFooter>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
-

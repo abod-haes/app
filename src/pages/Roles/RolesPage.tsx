@@ -1,42 +1,94 @@
-import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 import { DataTable } from "@/components/shared/DataTable";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { mockRoles } from "@/utils/mockData";
-import { Role } from "@/types";
+import { Pagination } from "@/components/shared/Pagination";
+import { DeleteDialog } from "@/components/shared/DeleteDialog";
+import { ActionButtons } from "@/components/shared/ActionButtons";
+import { RoleForm } from "./RoleForm";
+import {
+  useRoles,
+  useCreateRole,
+  useUpdateRole,
+  useDeleteRole,
+} from "@/hooks/queries";
+import { Role, CreateRoleDto, UpdateRoleDto } from "@/types/api/roles";
 
 export function RolesPage() {
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [formOpen, setFormOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null);
+
+  const { data } = useRoles({
+    page,
+    pageSize,
+  });
+
+  const createMutation = useCreateRole();
+  const updateMutation = useUpdateRole();
+  const deleteMutation = useDeleteRole();
+
+  const handleCreate = () => {
+    setSelectedRole(null);
+    setFormOpen(true);
+  };
+
+  const handleEdit = (role: Role) => {
+    setSelectedRole(role);
+    setFormOpen(true);
+  };
+
+  const handleDelete = (role: Role) => {
+    setSelectedRole(role);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleFormSubmit = (formData: CreateRoleDto | UpdateRoleDto) => {
+    if (selectedRole) {
+      // Update
+      updateMutation.mutate(
+        { id: selectedRole.id, data: formData as UpdateRoleDto },
+        {
+          onSuccess: () => {
+            setFormOpen(false);
+            setSelectedRole(null);
+          },
+        }
+      );
+    } else {
+      // Create
+      createMutation.mutate(formData as CreateRoleDto, {
+        onSuccess: () => {
+          setFormOpen(false);
+        },
+      });
+    }
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedRole) {
+      deleteMutation.mutate(selectedRole.id, {
+        onSuccess: () => {
+          setDeleteDialogOpen(false);
+          setSelectedRole(null);
+        },
+      });
+    }
+  };
+
   const columns = [
     {
       header: "الاسم",
       accessor: "name" as keyof Role,
     },
     {
-      header: "الوصف",
-      accessor: "description" as keyof Role,
-    },
-    {
-      header: "الصلاحيات",
-      accessor: "permissions" as keyof Role,
-      cell: (value: string[]) => (
-        <div className="flex flex-wrap gap-1">
-          {value.slice(0, 2).map((perm, idx) => (
-            <Badge key={idx} variant="outline" className="text-xs">
-              {perm}
-            </Badge>
-          ))}
-          {value.length > 2 && (
-            <Badge variant="outline" className="text-xs">
-              +{value.length - 2} المزيد
-            </Badge>
-          )}
-        </div>
-      ),
-    },
-    {
-      header: "المستخدمين",
-      accessor: "userCount" as keyof Role,
-      cell: (value: number) => (
-        <span className="font-medium">{value} مستخدم</span>
+      header: "الإجراءات",
+      accessor: (row: Role) => (
+        <ActionButtons
+          onEdit={() => handleEdit(row)}
+          onDelete={() => handleDelete(row)}
+        />
       ),
     },
   ];
@@ -48,10 +100,42 @@ export function RolesPage() {
         description="إدارة أدوار المستخدمين والصلاحيات"
         action={{
           label: "إضافة دور",
-          onClick: () => console.log("Add role clicked"),
+          onClick: handleCreate,
         }}
       />
-      <DataTable data={mockRoles} columns={columns} />
+
+      <DataTable
+        data={data?.items || []}
+        columns={columns}
+        emptyMessage="لا توجد أدوار متاحة"
+      />
+
+      {data && data.totalCount > pageSize && (
+        <Pagination
+          page={page}
+          totalPages={Math.ceil(data.totalCount / pageSize)}
+          totalCount={data.totalCount}
+          pageSize={pageSize}
+          onPageChange={setPage}
+      />
+      )}
+
+      <RoleForm
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSubmit={handleFormSubmit}
+        role={selectedRole || undefined}
+        isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <DeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        title="حذف الدور"
+        description={`هل أنت متأكد من حذف الدور "${selectedRole?.name}"؟`}
+        isLoading={deleteMutation.isPending}
+      />
     </div>
   );
 }

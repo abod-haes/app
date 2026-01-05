@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { ordersApi } from '@/api/services/orders';
 import { PaginationParams } from '@/types/api/common';
-import { Order } from '@/types/api/orders';
 
 // Query keys
 export const orderKeys = {

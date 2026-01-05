@@ -16,13 +16,16 @@ import {
 } from "@/hooks/queries";
 import { Category } from "@/types/api/categories";
 import { CreateCategoryDto, UpdateCategoryDto } from "@/types/api/categories";
+import { getImageUrl } from "@/api/client";
 
 export function CategoriesPage() {
   const [page, setPage] = useState(1);
   const [pageSize] = useState(20);
   const [formOpen, setFormOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
+    null
+  );
 
   const { data, isLoading, isError, error } = useCategories({
     page,
@@ -49,7 +52,9 @@ export function CategoriesPage() {
     setDeleteDialogOpen(true);
   };
 
-  const handleFormSubmit = (formData: CreateCategoryDto | UpdateCategoryDto) => {
+  const handleFormSubmit = (
+    formData: CreateCategoryDto | UpdateCategoryDto
+  ) => {
     if (selectedCategory) {
       // Update
       updateMutation.mutate(
@@ -89,7 +94,7 @@ export function CategoriesPage() {
         <div className="h-12 w-12 rounded-lg overflow-hidden border">
           {row.imagePath ? (
             <img
-              src={row.imagePath}
+              src={getImageUrl(row.imagePath)}
               alt={row.name}
               className="h-full w-full object-cover"
             />
@@ -126,7 +131,11 @@ export function CategoriesPage() {
         <ActionButtons
           onEdit={() => handleEdit(row)}
           onDelete={() => handleDelete(row)}
-          disabled={createMutation.isPending || updateMutation.isPending || deleteMutation.isPending}
+          disabled={
+            createMutation.isPending ||
+            updateMutation.isPending ||
+            deleteMutation.isPending
+          }
         />
       ),
     },
@@ -135,10 +144,7 @@ export function CategoriesPage() {
   if (isLoading) {
     return (
       <div>
-        <PageHeader
-          title="الفئات"
-          description="إدارة فئات المنتجات"
-        />
+        <PageHeader title="الفئات" description="إدارة فئات المنتجات" />
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-muted-foreground">جاري تحميل البيانات...</p>
@@ -151,20 +157,14 @@ export function CategoriesPage() {
   if (isError) {
     return (
       <div>
-        <PageHeader
-          title="الفئات"
-          description="إدارة فئات المنتجات"
-        />
+        <PageHeader title="الفئات" description="إدارة فئات المنتجات" />
         <Card>
           <CardContent className="py-10 text-center">
             <p className="text-destructive">حدث خطأ أثناء تحميل البيانات</p>
             <p className="text-sm text-muted-foreground mt-2">
               {error instanceof Error ? error.message : "خطأ غير معروف"}
             </p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="mt-4"
-            >
+            <Button onClick={() => window.location.reload()} className="mt-4">
               إعادة المحاولة
             </Button>
           </CardContent>
@@ -187,7 +187,7 @@ export function CategoriesPage() {
         }}
       />
       <DataTable data={categories} columns={columns} />
-      
+
       {data && data.totalCount > 0 && (
         <Pagination
           page={page}
@@ -204,9 +204,7 @@ export function CategoriesPage() {
         onOpenChange={setFormOpen}
         onSubmit={handleFormSubmit}
         category={selectedCategory || undefined}
-        isLoading={
-          createMutation.isPending || updateMutation.isPending
-        }
+        isLoading={createMutation.isPending || updateMutation.isPending}
       />
 
       {/* Delete Dialog */}
@@ -220,4 +218,3 @@ export function CategoriesPage() {
     </div>
   );
 }
-

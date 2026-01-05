@@ -1,13 +1,23 @@
+import { motion, AnimatePresence } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useSidebarStore } from "@/stores/useSidebarStore";
+import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
-import { Menu, PanelLeftClose } from "lucide-react";
+import { Menu, PanelLeftClose, LogOut, User } from "lucide-react";
 
 interface HeaderProps {
   title: string;
 }
 
 export function Header({ title }: HeaderProps) {
+  const navigate = useNavigate();
   const { isOpen, toggle } = useSidebarStore();
+  const { user, logout } = useAuthStore();
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
+  };
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b bg-background px-4 sm:px-6">
@@ -24,7 +34,37 @@ export function Header({ title }: HeaderProps) {
           <Menu className="h-5 w-5" />
         )}
       </Button>
-      <h1 className="text-xl font-semibold">{title}</h1>
+      <AnimatePresence mode="wait">
+        <motion.h1
+          key={title}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          transition={{ duration: 0.2 }}
+          className="text-xl font-semibold flex-1"
+        >
+          {title}
+        </motion.h1>
+      </AnimatePresence>
+
+      <div className="flex items-center gap-2">
+        {user && (
+          <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+            <User className="h-4 w-4" />
+            <span>
+              {user.firstName} {user.lastName}
+            </span>
+          </div>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleLogout}
+          aria-label="تسجيل الخروج"
+        >
+          <LogOut className="h-5 w-5" />
+        </Button>
+      </div>
     </header>
   );
 }

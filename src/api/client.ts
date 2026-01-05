@@ -4,8 +4,48 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://wasel2.somee.com";
+// Function to get API base URL
+const getApiBaseUrl = () => {
+  // Check if environment variable is set
+  if (process.env.REACT_APP_API_BASE_URL) {
+    return process.env.REACT_APP_API_BASE_URL;
+  }
+
+  // In production, use empty string (relative URL) to avoid CORS issues
+  // This assumes API is on same domain or behind a reverse proxy
+  if (process.env.NODE_ENV === "production") {
+    return "http://wasel2.somee.com";
+  }
+
+  // In development, use full URL (proxy will handle CORS)
+  return "http://wasel2.somee.com";
+};
+
+export const API_BASE_URL = getApiBaseUrl();
+
+// Helper function to get full image URL
+export const getImageUrl = (imagePath: string): string => {
+  if (!imagePath) return "";
+
+  // If imagePath is already a full URL, return it
+  if (imagePath.startsWith("http://") || imagePath.startsWith("https://")) {
+    return imagePath;
+  }
+
+  // If imagePath starts with /, it's already a relative path
+  if (imagePath.startsWith("/")) {
+    return imagePath;
+  }
+
+  // In production, use relative URL
+  if (process.env.NODE_ENV === "production") {
+    return `/${imagePath}`;
+  }
+
+  // In development, use full URL
+  const baseUrl = API_BASE_URL || "http://wasel2.somee.com";
+  return `${baseUrl}/${imagePath}`;
+};
 
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -18,11 +58,11 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // يمكن إضافة authentication token هنا
-    // const token = localStorage.getItem('token');
-    // if (token) {
-    //   config.headers.Authorization = `Bearer ${token}`;
-    // }
+    // إضافة authentication token
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error: AxiosError) => {
@@ -42,8 +82,12 @@ apiClient.interceptors.response.use(
       const status = error.response.status;
       switch (status) {
         case 401:
-          // Unauthorized - يمكن إعادة توجيه للـ login
+          // Unauthorized - إعادة توجيه للـ login
           console.error("Unauthorized access");
+          // إزالة token من localStorage
+          localStorage.removeItem("token");
+          // إعادة توجيه للصفحة الرئيسية (سيتم توجيهها للـ login)
+          window.location.href = "/login";
           break;
         case 403:
           console.error("Forbidden access");

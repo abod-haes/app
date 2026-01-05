@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '@/api/services/products';
 import { ProductsParams, CreateProductDto, UpdateProductDto } from '@/types/api/products';
-import { Product } from '@/types/api/products';
 
 // Query keys
 export const productKeys = {
