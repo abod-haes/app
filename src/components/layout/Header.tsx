@@ -1,8 +1,10 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useSidebarStore } from "@/stores/useSidebarStore";
 import { useAuthStore } from "@/stores/useAuthStore";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { Menu, PanelLeftClose, LogOut, User } from "lucide-react";
 
 interface HeaderProps {
@@ -13,9 +15,15 @@ export function Header({ title }: HeaderProps) {
   const navigate = useNavigate();
   const { isOpen, toggle } = useSidebarStore();
   const { user, logout } = useAuthStore();
+  const [logoutDialogOpen, setLogoutDialogOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogoutClick = () => {
+    setLogoutDialogOpen(true);
+  };
+
+  const handleConfirmLogout = () => {
     logout();
+    setLogoutDialogOpen(false);
     navigate("/login", { replace: true });
   };
 
@@ -59,12 +67,23 @@ export function Header({ title }: HeaderProps) {
         <Button
           variant="ghost"
           size="icon"
-          onClick={handleLogout}
+          onClick={handleLogoutClick}
           aria-label="تسجيل الخروج"
         >
           <LogOut className="h-5 w-5" />
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={logoutDialogOpen}
+        onOpenChange={setLogoutDialogOpen}
+        onConfirm={handleConfirmLogout}
+        title="تسجيل الخروج"
+        description="هل أنت متأكد من رغبتك في تسجيل الخروج؟ سيتم إنهاء جلستك الحالية."
+        confirmText="تسجيل الخروج"
+        cancelText="إلغاء"
+        variant="destructive"
+      />
     </header>
   );
 }

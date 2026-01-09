@@ -11,38 +11,17 @@ const getApiBaseUrl = () => {
     return process.env.REACT_APP_API_BASE_URL;
   }
 
-  // Check if we're on Vercel (production) by checking hostname
-  // Use relative URLs so requests go through Vercel serverless function
-  if (typeof window !== "undefined") {
-    const hostname = window.location.hostname;
-    // If on Vercel or production domain, use relative URLs
-    if (
-      hostname.includes("vercel.app") ||
-      hostname.includes("vercel.com") ||
-      process.env.NODE_ENV === "production"
-    ) {
-      return ""; // Empty string = relative URLs (same origin)
-    }
-  } else if (process.env.NODE_ENV === "production") {
-    // Server-side: use relative URLs in production
-    return "";
+  // In production, use empty string (relative URL) to avoid CORS issues
+  // This assumes API is on same domain or behind a reverse proxy
+  if (process.env.NODE_ENV === "production") {
+    return "http://wasel2.somee.com";
   }
 
-  // In development, use full HTTP URL (proxy will handle CORS)
+  // In development, use full URL (proxy will handle CORS)
   return "http://wasel2.somee.com";
 };
 
 export const API_BASE_URL = getApiBaseUrl();
-
-// Log API base URL for debugging (only in browser)
-if (typeof window !== "undefined") {
-  console.log(
-    "[API Client] Base URL:",
-    API_BASE_URL || "(empty - using relative URLs)"
-  );
-  console.log("[API Client] Hostname:", window.location.hostname);
-  console.log("[API Client] NODE_ENV:", process.env.NODE_ENV);
-}
 
 // Helper function to get full image URL
 export const getImageUrl = (imagePath: string): string => {
@@ -79,8 +58,9 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // إضافة authentication token
-    const token = localStorage.getItem("token");
+    // إضافة authentication token (من localStorage أو sessionStorage)
+    const token =
+      localStorage.getItem("token") || sessionStorage.getItem("token");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

@@ -357,12 +357,12 @@ const MultipleSelect = React.forwardRef<HTMLDivElement, MultipleSelectProps>(
 
     return (
       <div
-        ref={ref}
+          ref={ref}
         dir={direction}
         data-slot="multiple-select"
         className={cn("relative w-full", className)}
-        {...props}
-      >
+          {...props}
+        >
         <PopoverPrimitive.Root>
           <PopoverPrimitive.Trigger asChild>
             <button

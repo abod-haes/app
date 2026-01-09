@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { authApi } from "@/api/services/auth";
 import { useAuthStore } from "@/stores/useAuthStore";
@@ -15,13 +16,14 @@ export function LoginPage() {
 
   // إعادة توجيه إذا كان المستخدم مسجل دخول بالفعل
   useEffect(() => {
-    const hasToken = token || localStorage.getItem('token');
+    const hasToken = token || localStorage.getItem('token') || sessionStorage.getItem('token');
     if (isAuthenticated || hasToken) {
       navigate("/", { replace: true });
     }
   }, [isAuthenticated, token, navigate]);
   const [phoneNumber, setPhoneNumber] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +38,8 @@ export function LoginPage() {
         password,
       });
 
-      // حفظ البيانات في store
-      login(response.token, response.user);
+      // حفظ البيانات في store (مع rememberMe)
+      login(response.token, response.user, rememberMe);
 
       // إعادة توجيه للـ dashboard
       navigate("/", { replace: true });
@@ -116,6 +118,25 @@ export function LoginPage() {
                     className="pr-10"
                   />
                 </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.45 }}
+                className="flex items-center space-x-2 space-x-reverse"
+              >
+                <Checkbox
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                />
+                <Label
+                  htmlFor="rememberMe"
+                  className="text-sm font-normal cursor-pointer select-none"
+                >
+                  تذكرني
+                </Label>
               </motion.div>
 
               {error && (

@@ -17,9 +17,9 @@ const isMobileScreen = () => {
 export const useSidebarStore = create<SidebarState>()((set) => ({
   // Initialize based on screen size: open on desktop, closed on mobile
   isOpen: typeof window !== 'undefined' ? !isMobileScreen() : true,
-  toggle: () => set((state) => ({ isOpen: !state.isOpen })),
-  open: () => set({ isOpen: true }),
-  close: () => set({ isOpen: false }),
+      toggle: () => set((state) => ({ isOpen: !state.isOpen })),
+      open: () => set({ isOpen: true }),
+      close: () => set({ isOpen: false }),
   syncWithScreenSize: () => {
     // Sync with screen size: open on desktop (>=768px), closed on mobile (<768px)
     if (typeof window !== 'undefined') {
